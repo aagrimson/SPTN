@@ -1,1 +1,24 @@
 -- Measure the impact of add in week 3 2016 vs. last year
+
+SELECT 
+    fiscal_week_no,
+    CASE WHEN banner_no IN (110, 210) THEN 'North - South' ELSE  banner_value END AS banner_value, 
+     segment_code, 
+     SUM(spend) AS spend,
+     COUNT(DISTINCT c.household_id) AS households 
+FROM 
+    hal.item_fact_spartan a
+INNER JOIN
+    hal.location_dim_spartan b ON b.location_key = a.location_key
+INNER JOIN 
+    hal.customer_dim_spartan c ON c.customer_key = a.customer_key
+ INNER JOIN 
+     extra.customer_styles_01152016 d ON d.household_id = c.household_id
+  INNER JOIN 
+      hal.calendar_dim_spartan e ON e.date_key = a.date_key
+ WHERE banner_no IN (110, 210, 250) AND
+               fiscal_week_no IN (201502, 201503, 201504, 201603)
+ GROUP BY 1, 2, 3;
+ 
+
+ 
