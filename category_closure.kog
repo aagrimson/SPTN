@@ -1,0 +1,62 @@
+SELECT DISTINCT department_value, group_value, category_value, class_value
+FROM 
+    hal.product_dim_spartan;
+
+
+SELECT DISTINCT department_value
+FROM 
+    hal.product_dim_spartan;
+    
+
+SELECT DISTINCT group_value
+FROM 
+    hal.product_dim_spartan;
+    
+
+SELECT DISTINCT category_value
+FROM 
+    hal.product_dim_spartan;
+    
+
+SELECT DISTINCT class_value
+FROM 
+    hal.product_dim_spartan;
+    
+
+
+
+CREATE VIEW baskets_group_no AS
+SELECT DISTINCT 
+  customer_key,
+  transaction_key,
+  group_no
+FROM 
+    hal.item_fact_known_spartan a
+INNER JOIN
+    hal.product_dim_spartan b ON b.product_key = a.product_key
+ INNER JOIN 
+    hal.location_dim_spartan c ON c.location_key = a.location_key
+ WHERE date_key >= '2015-08-01' AND
+               banner_no IN (110, 210, 250);
+               
+CREATE VIEW IMAGE baskets_group_no;
+
+
+
+CREATE VIEW baskets_group_no_sample AS
+SELECT *
+FROM 
+  baskets_group_no
+WHERE MOD(transaction_key, 10) = 0;
+
+CREATE VIEW IMAGE baskets_group_no_sample;
+
+
+
+SELECT AVG(groups*1.000)
+FROM (
+
+SELECT transaction_key, COUNT(*) AS groups
+FROM 
+  baskets
+GROUP BY 1) x;
