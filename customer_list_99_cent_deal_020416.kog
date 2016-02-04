@@ -1,0 +1,78 @@
+CREATE TABLE upc_list_99_cent_deal (
+      upc_no BIGINT,
+      upc_desc VARCHAR(30)
+   );
+   
+--- load csv
+   
+CREATE TABLE customer_styles_02042016 (
+      household_id BIGINT,
+      segment_code INT
+   );
+   
+
+--load csv
+
+
+
+-- all household id's that purchased at least one SKU on deal in week 4 
+CREATE VIEW household_id_99_deal AS
+SELECT DISTINCT household_id
+FROM 
+    hal.item_fact_known_spartan a
+INNER JOIN
+    hal.product_dim_spartan b ON b.product_key = a.product_key
+ INNER JOIN 
+     upc_list_99_cent_deal c ON c.upc_no = b.upc_no
+ INNER JOIN 
+     hal.calendar_dim_spartan d ON d.date_key = a.date_key
+ INNER JOIN 
+     hal.location_dim_spartan e ON e.location_key = a.location_key
+  INNER JOIN
+      hal.customer_dim_spartan f ON f.customer_key = a.customer_key
+  WHERE fiscal_week_no = 201604 AND
+                banner_no IN (110, 210, 270); -- North, South, VG
+                
+CREATE VIEW IMAGE household_id_99_deal;
+
+
+
+-- Left Join customer style segment
+CREATE VIEW household_id_99_deal_w_style AS
+SELECT 
+    a.household_id,
+    b.segment_code
+FROM 
+    household_id_99_deal a
+LEFT JOIN
+    customer_styles_02042016 b ON b.household_id = a.household_id; 
+
+CREATE VIEW IMAGE household_id_99_deal_w_style;
+
+
+
+--- 892 households w/o style segment
+SELECT COUNT(*)
+FROM household_id_99_deal_w_style
+WHERE segment_code IS NULL;
+
+
+
+
+
+SELECT DISTINCT b.upc_no
+FROM 
+    hal.item_fact_known_spartan a
+INNER JOIN
+    hal.product_dim_spartan b ON b.product_key = a.product_key
+ INNER JOIN 
+     upc_list_99_cent_deal c ON c.upc_no = b.upc_no
+ INNER JOIN 
+     hal.calendar_dim_spartan d ON d.date_key = a.date_key
+ INNER JOIN 
+     hal.location_dim_spartan e ON e.location_key = a.location_key
+  WHERE fiscal_week_no = 201604 AND
+                banner_no IN (110, 220, 270); -- North, South, VG
+
+  
+
