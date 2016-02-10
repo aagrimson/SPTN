@@ -1,0 +1,144 @@
+--* 1532          Midland                 
+--* 647          Manisteee         
+--* 1504         Cheboygen         
+--* 1531         SSM                   
+--* 265         Kentwood         
+--* 254         Leonard         
+--* 1980         Paw Paw         
+--* 1588         Portage                 
+--* 1903         Williamston           
+--*  1920         Howell                   
+--* 1931         Brighton           
+
+--West: 
+--* 3043         Prairie mkt           
+--* 3253         Patrick                 
+--* 3254         Omaha St         
+--* 3344         Hudson           
+--* 3107         Moorhead           
+--* 3121, 3122, 3123 - Dickinson Market 
+
+
+--LOAD FROM  C:\Users\Andy Agrimson\Documents\GitHub\SPTN\
+
+
+
+
+CREATE TABLE CUSTOMER_STYLES_14_JUN_2014_13_JUN_2015 (
+    household_id BIGINT ,
+    segment_code INTEGER );
+
+
+ALTER TABLE CUSTOMER_STYLES_14_JUN_2014_13_JUN_2015
+    ADD start_date DATE DEFAULT '2014-06-14',
+    ADD end_date DATE DEFAULT '2015-06-13';
+
+
+CREATE TABLE CUSTOMER_STYLES_3_JAN_2015_2_JAN_2016 (
+    household_id BIGINT ,
+    segment_code INTEGER
+);
+
+ALTER TABLE CUSTOMER_STYLES_3_JAN_2015_2_JAN_2016
+    ADD start_date DATE DEFAULT '2015-06-14',
+    ADD end_date DATE DEFAULT '2016-01-02';
+    
+
+
+CREATE VIEW customer_styles AS 
+SELECT *
+FROM 
+    CUSTOMER_STYLES_14_JUN_2014_13_JUN_2015
+    
+UNION ALL
+
+SELECT *
+FROM 
+    CUSTOMER_STYLES_3_JAN_2015_2_JAN_2016;
+    
+CREATE VIEW IMAGE  customer_styles;
+
+SELECT household_id, COUNT(*)
+FROM customer_styles
+GROUP BY 1
+HAVING COUNT(*) > 1;
+
+SELECT * 
+FROM customer_styles
+WHERE household_id IN (906835, 1111819, 1347269);
+
+
+
+CREATE VIEW base_1 AS
+SELECT 
+    location_id,
+    segment_code,
+    fiscal_period_no,
+    fiscal_week_no,
+    SUM(spend) AS spend,
+    SUM(units) AS units,
+    SUM(margin) AS margin,
+    COUNT(DISTINCT b.household_id) AS households,
+    COUNT(DISTINCT transaction_key) AS trips
+FROM
+    hal.item_fact_known_spartan a
+INNER JOIN 
+    hal.customer_dim_spartan b ON b.customer_key = a.customer_key
+INNER JOIN 
+    hal.location_dim_spartan c ON c.location_key = a.location_key
+INNER JOIN 
+    hal.calendar_dim_spartan d ON d.date_key = a.date_key
+INNER JOIN 
+    hal.product_dim_spartan  e ON e.product_key = a.product_key
+INNER JOIN 
+    customer_styles f ON f.household_id = b.household_id 
+WHERE location_id IN (1532, 647, 1504, 1531, 265, 254, 1980, 1588, 1903, 1920, 1931, 3043, 3253, 3254, 3344, 3107, 3121, 3122, 3123) AND
+             ( a.date_key BETWEEN start_date AND end_date) AND
+             department_no NOT IN (170, 210, 220, 230, 360)
+GROUP BY 1, 2, 3, 4;
+
+
+CREATE VIEW IMAGE base_1;
+
+
+CREATE VIEW base_2 AS
+SELECT 
+    location_id,
+    segment_code,
+    group_no,
+    SUM(CASE WHEN fiscal_week_no BETWEEN 201527 AND 201552 THEN spend ELSE 0 END) AS ty_spend,
+    SUM(CASE WHEN fiscal_week_no BETWEEN 201527 AND 201552 THEN units ELSE 0 END) AS ty_units,
+    SUM(CASE WHEN fiscal_week_no BETWEEN 201527 AND 201552 THEN margin ELSE 0 END) AS ty_margin,
+    COUNT(DISTINCT CASE WHEN fiscal_week_no BETWEEN 201527 AND 201552 THEN b.household_id END) AS ty_households,
+    COUNT(DISTINCT CASE WHEN fiscal_week_no BETWEEN 201527 AND 201552 THEN transaction_key END) AS ty_trips,
+    
+    SUM(CASE WHEN fiscal_week_no BETWEEN 201428 AND 201453 THEN spend ELSE 0 END) AS ly_spend,
+    SUM(CASE WHEN fiscal_week_no BETWEEN 201428 AND 201453 THEN units ELSE 0 END) AS ly_units,
+    SUM(CASE WHEN fiscal_week_no BETWEEN 201428 AND 201453 THEN margin ELSE 0 END) AS ly_margin,
+    COUNT(DISTINCT CASE WHEN fiscal_week_no BETWEEN 201428 AND 201453 THEN b.household_id END) AS ly_households,
+    COUNT(DISTINCT CASE WHEN fiscal_week_no BETWEEN 201428 AND 201453 THEN transaction_key END) AS ly_trips
+FROM
+    hal.item_fact_known_spartan a
+INNER JOIN 
+    hal.customer_dim_spartan b ON b.customer_key = a.customer_key
+INNER JOIN 
+    hal.location_dim_spartan c ON c.location_key = a.location_key
+INNER JOIN 
+    hal.calendar_dim_spartan d ON d.date_key = a.date_key
+INNER JOIN 
+    hal.product_dim_spartan  e ON e.product_key = a.product_key
+INNER JOIN 
+    customer_styles f ON f.household_id = b.household_id 
+WHERE location_id IN (1532, 647, 1504, 1531, 265, 254, 1980, 1588, 1903, 1920, 1931, 3043, 3253, 3254, 3344, 3107, 3121, 3122, 3123) AND
+             ( a.date_key BETWEEN start_date AND end_date) AND
+             department_no NOT IN (170, 210, 220, 230, 360)
+GROUP BY 1, 2, 3;
+
+
+CREATE VIEW IMAGE base_2;
+
+SELECT * FROM base_2;
+
+
+SELECT fiscal_period_no, fiscal_week_no, date_key
+FROM hal.calendar_dim_spartan;
